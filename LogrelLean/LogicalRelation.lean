@@ -1,6 +1,6 @@
 import LogrelLean.Ast
 import LogrelLean.UntypedReduction
-
+import LogrelLean.GenericTyping
 
 def RedRel.{u, v} :=
   Ctx →
@@ -41,8 +41,70 @@ inductive TypeLevel : Type :=
 inductive TypeLevel.Lt : TypeLevel → TypeLevel → Type
   | Oi : TypeLevel.Lt zero one
 
-notation A "<<" B => TypeLevel.Lt A B
+notation:60 A:60 "<<" B:60 => TypeLevel.Lt A B
+
+variable [WfContext] [WfType] [ConvNeuConv] [RedType] [Typing] [ConvType] [RedTerm] [ConvTerm]
 
 structure NeRedTy (Γ : Ctx) (A : Term) : Type where
-  ty : Term
-  --red : [ Γ ⊢ \]
+  ty  : Term
+  red : [ Γ ⊢ B :⤳*: ty]
+  eq  : [ Γ ⊢ ty ~ ty : 𝒰]
+
+notation "[ " Γ " ⊨ne " A " ]" => NeRedTy Γ A
+
+structure NeRedTyEq (Γ : Ctx) (A B : Term) (neA : [ Γ ⊨ne A ]): Type where
+  ty  : Term
+  red : [ Γ ⊢ B :⤳*: ty]
+  eq  : [ Γ ⊢ neA.ty ~ ty : 𝒰]
+
+notation "[ " Γ " ⊨ne " A "≃" B "|" R" ]" => NeRedTyEq Γ A B R
+
+structure NeRedTm (Γ : Ctx) (t A : Term) (neA : [ Γ ⊨ne A ]): Type where
+  te : Term
+  red :  [ Γ ⊢ t :⤳*: te : neA.ty ]
+  eq :  [ Γ ⊢ t ~ t : neA.ty]
+
+notation "[ " Γ " ⊨ne " t ":" A "|" R" ]" => NeRedTm Γ t A R
+
+
+structure NeRedTmEq (Γ : Ctx) (t u A : Term) (neA : [ Γ ⊨ne A ]): Type where
+  teL  : Term
+  teR  : Term
+  redL : [ Γ ⊢ t :⤳*: teL : neA.ty ]
+  red  : [ Γ ⊢ u :⤳*: teR : neA.ty ]
+  eq   : [ Γ ⊢ teL ~ teR  : neA.ty]
+
+notation "[ " Γ " ⊨ne " t "≃" u ":" A "|" R" ]" => NeRedTmEq Γ t u A R
+
+structure URedTy (l : TypeLevel) (Γ : Ctx) (A : Term) : Type where
+  level : TypeLevel
+  lt : level << l
+  wfCtx : [ ⊢ Γ]
+  red :  [ Γ ⊢ A :⤳*: 𝒰 ]
+
+notation "[ " Γ " ⊨U⟨" l "⟩" A " ]" => URedTy l Γ A
+
+structure URedTyEq (l : TypeLevel) (Γ : Ctx) (A : Term) : Type where
+  red :  [ Γ ⊢ A :⤳*: 𝒰 ]
+
+notation "[ " Γ " ⊨U≃" A " ]" => URedTyEq Γ A
+
+structure URedTm (l : TypeLevel)
+  (rec : ∀ {l'}, l' << l → RedRel) (Γ : Ctx) (t A : Term) (R: [ Γ ⊨U⟨l⟩ A ]) : Type _ where
+  te : Term
+  red : [ Γ ⊢ t :⤳*: te : 𝒰 ]
+  --type : IsType te
+  eqr : [ Γ ⊢ te ~ te : 𝒰]
+  rel : [rec R.lt | Γ ⊨  t]
+
+structure URedTmEq (l : TypeLevel)
+  (rec : ∀ {l'}, l' << l → RedRel) (Γ : Ctx) (t u A : Term) (R: [ Γ ⊨U⟨l⟩ A ]) : Type _ where
+  redL  : URedTm l rec Γ t A R
+  redR  : URedTm l rec Γ u A R
+  eq    : [ Γ ⊢ redL.te ≃ redR.te : 𝒰 ]
+  relL  : [ rec R.lt | Γ ⊨ t ]
+  relR  : [ rec R.lt | Γ ⊨ u ]
+  relEq : [ rec R.lt | Γ ⊨ t ≃ u | relL ]
+
+notation "[ " Rec "|" Γ " ⊨U" t ":" A "|" R " ]" => URedTm _ Rec Γ t A R
+notation "[ " Rec "|" Γ " ⊨U" t "≃" u ":" A "|" R " ]" => URedTmEq _ Rec Γ t u A R

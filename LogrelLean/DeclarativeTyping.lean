@@ -198,4 +198,4 @@ local notation "[" "⊢" Γ "]" => WfCtxDecl Γ
 local notation "[" Γ "⊢" A "]" => WfTypeDecl Γ A
 local notation "[" Γ "⊢" x ":" A "]" => TypingDecl Γ x A
 local notation "[" Γ "⊢" A "≃" B "]" => ConvTypeDecl  Γ A B
-local notation "[" Γ "⊢" x ":" A "≃" B "]" => ConvTermDecl x Γ A B
+local notation "[" Γ "⊢" x "≃" y ":" A "]" => ConvTermDecl Γ x y A
