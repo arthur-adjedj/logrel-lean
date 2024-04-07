@@ -11,7 +11,6 @@ local notation "[" Γ "⊢" A "]" => WfTypeDecl Γ A
 local notation "[" Γ "⊢" x ":" A "]" => TypingDecl Γ x A
 local notation "[" Γ "⊢" A "≃" B "]" => ConvTypeDecl  Γ A B
 local notation "[" Γ "⊢" x "≃" y ":" A "]" => ConvTermDecl Γ x y A
-set_option quotPrecheck true
 
 mutual
   inductive WfCtxDecl : Ctx → Type :=
@@ -194,9 +193,9 @@ mutual
 end
 
 end
-
-notation "[" "⊢" Γ "]" => WfCtxDecl Γ
-notation "[" Γ "⊢" A "]" => WfTypeDecl Γ A
-notation "[" Γ "⊢" x ":" A "]" => TypingDecl Γ x A
-notation "[" Γ "⊢" A "≃" B "]" => ConvTypeDecl  Γ A B
-notation "[" Γ "⊢" x ":" A "≃" B "]" => ConvTermDecl x Γ A B
+set_option hygiene true
+local notation "[" "⊢" Γ "]" => WfCtxDecl Γ
+local notation "[" Γ "⊢" A "]" => WfTypeDecl Γ A
+local notation "[" Γ "⊢" x ":" A "]" => TypingDecl Γ x A
+local notation "[" Γ "⊢" A "≃" B "]" => ConvTypeDecl  Γ A B
+local notation "[" Γ "⊢" x ":" A "≃" B "]" => ConvTermDecl x Γ A B
