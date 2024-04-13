@@ -469,7 +469,11 @@ inductive IdPropEq {Γ : Ctx} {A: Term} {IA : IdRedTyPack Γ A} : Term → Term 
       eq : [Γ ⊢ nfL ≃ nfR : IA.out_ty]
       prop : IdPropEq (Γ:=Γ) (A:=A) (IA:=IA) nfL nfR
 
-/--Definition of the logical relation-/
+/--Definition of the logical relation
+  2 issues here:
+  - universe issues, fixable with enough work on expliciting everything, just like in Coq
+  - nested local vars, needs Lean kernel fix to extend the algorithm..
+-/
 inductive LR
   [WfContext] [WfType] [Typing] [ConvTerm] [ConvType] [ConvNeuConv] [RedType] [RedTerm]
   {l : TypeLevel} (rec : ∀ l', l' << l → RedRel)
