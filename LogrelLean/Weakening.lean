@@ -72,4 +72,6 @@ def WkWellWk.id : Γ ≤ Γ := ⟨_,Ctx.wellWkId⟩
 
 def wk_well_wk_compose {Γ Γ' Γ'' : Ctx} (ρ : Γ ≤ Γ') (ρ' : Γ' ≤ Γ'') : Γ ≤ Γ'' := sorry
 
+infixl:60 "∘w" => wk_well_wk_compose
+
 def wk₁ (A) : Γ,, A ≤ Γ := .step (.id ..)
