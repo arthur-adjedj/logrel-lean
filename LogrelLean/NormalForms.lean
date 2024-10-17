@@ -1,7 +1,7 @@
 import LogrelLean.Ast
 import LogrelLean.Context
 import LogrelLean.Weakening
-import Std.CodeAction
+-- import Std.CodeAction
 
 open Term
 

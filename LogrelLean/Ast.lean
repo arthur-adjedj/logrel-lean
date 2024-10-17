@@ -1,5 +1,5 @@
-import Std.CodeAction
-import Aesop
+-- import Std.CodeAction
+-- import Aesop
 
 attribute [symm] Eq.symm
 
@@ -85,7 +85,8 @@ theorem id_up_ren : up_ren id = id:= by
 theorem ren_id_id {t : Term}: t.ren id = t := by
   induction t <;>
   rw [ren] <;>
-  aesop
+  -- aesop
+  sorry
 
 syntax:max term noWs "⟨" term "⟩" : term
 macro_rules
@@ -147,7 +148,8 @@ theorem up_ren_ren_term_term : (up_ren g ∘ up_ren f) = up_ren (g ∘ f) := by
   induction x <;>
   · unfold Function.comp
     rw [up_ren,up_ren,up_ren]
-    aesop
+    -- aesop
+    sorry
 
 theorem compRen (ξ ζ : Nat → Nat) : (Term.ren ξ ∘ Term.ren ζ) = Term.ren (ξ ∘ ζ)
 := by
@@ -157,13 +159,15 @@ theorem compRen (ξ ζ : Nat → Nat) : (Term.ren ξ ∘ Term.ren ζ) = Term.ren
   rw [ren,ren,ren] <;>
   first
     | rfl
-    | aesop
+    -- | aesop
+    | sorry
 
 theorem up_ren_subst_term_term:
   (up_term τ) ∘ (up_ren ξ) = up_term (τ ∘ ξ) := by
     funext t
     induction t <;>
-    aesop
+    -- aesop
+    sorry
 
 theorem compSubstRen (ζ : Nat → Nat) (θ : Nat → Term) (t : Term) : (t.subst  θ).ren ζ = t.subst ((ren ζ) ∘ θ) := by
   induction t generalizing ζ θ <;>

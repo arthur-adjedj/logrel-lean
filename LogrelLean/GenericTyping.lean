@@ -1,33 +1,33 @@
 import LogrelLean.NormalForms
 
-class WfContext where
- wf_context : context -> Type
+class WfCtx where
+ wf_Ctx : Ctx -> Type
 class WfType where
- wf_type : context -> term -> Type
+ wf_type : Ctx -> Term -> Type
 class Typing where
- typing : context -> term -> term -> Type
+ typing : Ctx -> Term -> Term -> Type
 class Inferring where
- inferring : context -> term -> term -> Type
+ inferring : Ctx -> Term -> Term -> Type
 class InferringRed where
- infer_red : context -> term -> term -> Type
+ infer_red : Ctx -> Term -> Term -> Type
 class Checking where
- check : context -> term -> term -> Type
+ check : Ctx -> Term -> Term -> Type
 class ConvType where
- conv_type : context -> term -> term -> Type
+ conv_type : Ctx -> Term -> Term -> Type
 class ConvTypeRed where
- conv_type_red : context -> term -> term -> Type
+ conv_type_red : Ctx -> Term -> Term -> Type
 class ConvTerm where
- conv_term : context -> term -> term -> term -> Type
+ conv_Term : Ctx -> Term -> Term -> Term -> Type
 class ConvTermRed where
- conv_term_red : context -> term -> term -> term -> Type
+ conv_Term_red : Ctx -> Term -> Term -> Term -> Type
 class ConvNeu where
- conv_neu : context -> term -> term -> term -> Type
+ conv_neu : Ctx -> Term -> Term -> Term -> Type
 class ConvNeuRed where
- conv_neu_red : context -> term -> term -> term -> Type
+ conv_neu_red : Ctx -> Term -> Term -> Term -> Type
 class ConvNeuConv where
- conv_neu_conv : context -> term -> term -> term -> Type
+ conv_neu_conv : Ctx -> Term -> Term -> Term -> Type
 
-notation "[" "⊢" Γ "]" => WfContext.wf_context Γ
+notation "[" "⊢" Γ "]" => WfCtx.wf_Ctx Γ
 notation "[" Γ "⊢"  A "]" => WfType.wf_type Γ A
 notation "[" Γ "⊢" t ":" A "]" => Typing.typing Γ A t
 notation "[" Γ "⊢" x "▸" A "]" => Inferring.inferring Γ A x
@@ -35,8 +35,8 @@ notation "[" Γ "⊢" x "▸ₕ" A "]" => InferringRed.infer_red Γ A x
 notation "[" Γ "⊢" x "◃" A "]" => Checking.check Γ A x
 notation "[" Γ "⊢" A "≃" B "]" => ConvType.conv_type Γ A B
 notation "[" Γ "⊢" A "≃ₕ" B "]" => ConvTypeRed.conv_type_red Γ A B
-notation "[" Γ "⊢" x "≃" y ":" A "]" => ConvTerm.conv_term Γ A x y
-notation "[" Γ "⊢" x "≃ₕ" y ":" A "]" => ConvTermRed.conv_term_red Γ A x y
+notation "[" Γ "⊢" x "≃" y ":" A "]" => ConvTerm.conv_Term Γ A x y
+notation "[" Γ "⊢" x "≃ₕ" y ":" A "]" => ConvTermRed.conv_Term_red Γ A x y
 /-Neutral n and n' are convertible in Γ, inferring the type A-/
 notation "[" Γ "⊢" x "~" y "▸" A "]" => ConvNeu.conv_neu Γ A x y
 /-Whnfs t and t' are convertible in Γ-/
@@ -46,17 +46,17 @@ notation "[" Γ "⊢" x "~" y ":" A "]" => ConvNeuConv.conv_neu_conv Γ A x y
 
 
 class RedType where
- red : context -> term -> term -> Type
+ red : Ctx -> Term -> Term -> Type
 class OneStepRedTerm where
- red : context -> term -> term -> term -> Type
+ red : Ctx -> Term -> Term -> Term -> Type
 class RedTerm where
- red : context -> term -> term -> term -> Type
+ red : Ctx -> Term -> Term -> Term -> Type
 
 notation "[" Γ "⊢" t  "⤳" u ":" A  "]" => OneStepRedTerm.red Γ A t u
 notation "[" Γ "⊢" A  "⤳*" B "]" => RedType.red Γ A B
 notation "[" Γ "⊢" t  "⤳*" u ":" A  "]" => RedTerm.red Γ A t u
 
-variable [WfContext] [WfType] [Typing] [ConvType] [ConvTerm] [ConvNeuConv] [RedType] [RedTerm]
+variable [WfCtx] [WfType] [Typing] [ConvType] [ConvTerm] [ConvNeuConv] [RedType] [RedTerm]
 
 structure TypeRedWhnf (Γ : Ctx) (A B : Term) : Type where
   red : [ Γ ⊢ A ⤳* B ]

@@ -8,7 +8,7 @@ set_option hygiene false
 local notation "[" t  "⤳" u "]" => OneRed t u
 local notation "[" t  "⤳*" u "]" => RedClosure t u
 
-@[aesop safe constructors]
+-- @[aesop safe constructors]
 inductive OneRed : Term → Term → Type := --Make live in Prop perhaps ?
   | bred: [ tApp (tLambda A t) a ⤳ t[a..]]
   | appSubst : [t ⤳ u] → [tApp t a ⤳ tApp u a]
@@ -39,7 +39,8 @@ theorem Whne.noRed (h : Whne t) : [t ⤳ u] → False := by
   intro r
   induction r <;> cases h <;>
   first
-    | aesop
+    -- | aesop
+    | sorry
     | next h => cases h
 
 theorem Whnf.noRed (h : Whnf t) : [t ⤳ u] → False := by

@@ -1,6 +1,5 @@
 import LogrelLean.Context
 import LogrelLean.Ast
-import Aesop
 
 inductive Wk : Type :=
   | empty

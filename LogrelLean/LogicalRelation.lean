@@ -18,6 +18,11 @@ structure LRPack (Γ : Ctx) (A : Term) where
   redTm : Term → Type u
   eqTm  : Term → Term → Type u
 
+def LRPack.lift (pack : LRPack.{0} Γ A) : LRPack.{1} Γ A where
+  eqTy := ULift ∘ pack.eqTy
+  redTm := ULift ∘ pack.redTm
+  eqTm A B := ULift (pack.eqTm A B)
+
 notation "[ " P " | " Γ " ⊨ " A " ≃ " B " ]" => @LRPack.eqTy Γ A P B
 notation "[ " P " | " Γ " ⊨ " t " : " A " ]" => @LRPack.redTm Γ A P t
 notation "[ " P " | " Γ " ⊨ " t " ≃ " u " : " A " ]" => @LRPack.eqTm Γ A P t u
@@ -46,7 +51,7 @@ inductive TypeLevel.Lt : TypeLevel → TypeLevel → Type
 
 notation:60 A:60 "<<" B:60 => TypeLevel.Lt A B
 
-variable [WfContext] [WfType] [ConvNeuConv] [RedType] [Typing] [ConvType] [RedTerm] [ConvTerm]
+variable [WfCtx] [WfType] [ConvNeuConv] [RedType] [Typing] [ConvType] [RedTerm] [ConvTerm]
 
 structure NeRedTy (Γ : Ctx) (A : Term) : Type u where
   ty  : Term
@@ -110,6 +115,8 @@ structure URedTmEq (l : TypeLevel)
   relEq : [ rec R.lt | Γ ⊨ t ≃ u | relL ]
 
 notation "[ " Rec "|" Γ " ⊨U" t ":" A "|" R " ]" => URedTm _ Rec Γ t A R
+notation "[ " Rec "|" Γ " ⊨U" t ":" A "|" R " ]" => URedTm _ Rec Γ t A R
+
 notation "[ " Rec "|" Γ " ⊨U" t "≃" u ":" A "|" R " ]" => URedTmEq _ Rec Γ t u A R
 
 structure PolyRedPack (Γ : Ctx) (A B: Term) where
@@ -123,6 +130,13 @@ structure PolyRedPack (Γ : Ctx) (A B: Term) where
     [ ARed ρ h | Δ ⊨ a ≃ b : A⟨ρ⟩] →
     [ BRed ρ h ha | Δ ⊨ B[a .: (.tRel ∘ ρ)] ≃ B[b .: (.tRel ∘ ρ)]]
 
+def PolyRedPack.lift (pack : PolyRedPack.{0,1} Γ A B): PolyRedPack.{1,1} Γ A B where
+  ATy := pack.ATy
+  BTy := pack.BTy
+  ARed ρ h := (pack.ARed ρ h).lift
+  BRed ρ h p := pack.BRed ρ h p.down
+  BExt ρ h ha ar arq := pack.BExt ρ h ha.down ar.down arq.down
+
 structure PolyRedPackAdequate {Γ : Ctx} (R : RedRel) (PA : PolyRedPack Γ A B) where
   AAd (ρ : Δ ≤ Γ) (h: [⊢ Δ]) :
     (PA.ARed ρ h).Adequate R
@@ -135,7 +149,8 @@ structure PolyRedEq {Γ : Ctx} {A B : Term} (PA : PolyRedPack Γ A B) (A' B' : T
   BRed (ρ : Δ ≤ Γ) (h: [⊢ Δ]) (ha : [ PA.ARed ρ h | Δ ⊨ a : A⟨ρ⟩]) :
   [ PA.BRed ρ h ha | Δ ⊨ B[a .: (.tRel ∘ ρ)] ≃ B'[a .: (.tRel ∘ ρ)] ]
 
-structure ParamRedTyPack (T : Term → Term → Term) (Γ : Ctx)  (A : Term) where
+
+structure ParamRedTyPack (T : Term → Term → Term) (Γ : Ctx) (A : Term) where
   dom     : Term
   cod     : Term
   out_ty := T dom cod
@@ -144,7 +159,7 @@ structure ParamRedTyPack (T : Term → Term → Term) (Γ : Ctx)  (A : Term) whe
   eq      : [Γ ⊢ T dom cod ≃ T dom cod]
   polyRed : PolyRedPack Γ dom cod
 
-instance : CoeDep (ParamRedTyPack T Γ A) pk (PolyRedPack Γ pk.dom pk.cod):= ⟨pk.polyRed⟩
+instance foo: CoeDep (ParamRedTyPack T Γ A) pk (PolyRedPack Γ pk.dom pk.cod):= ⟨pk.polyRed⟩
 
 structure ParamRedTyEq {T : Term → Term → Term} {Γ : Ctx}  {A: Term} (B: Term) (PiA : ParamRedTyPack T Γ A) : Type _  where
   dom : Term
@@ -156,6 +171,14 @@ structure ParamRedTyEq {T : Term → Term → Term} {Γ : Ctx}  {A: Term} (B: Te
 
 
 def PiRedTy := ParamRedTyPack .tProd
+
+def PiRedTy.lift  (piA : PiRedTy.{0,1} Gamma A): PiRedTy.{1,1} Gamma A where
+  dom := piA.dom
+  cod := piA.cod
+  red := piA.red
+  eq_dom := piA.eq_dom
+  eq := piA.eq
+  polyRed := piA.polyRed.lift
 
 def PiRedTyAdequate (R : RedRel) (PiA : ParamRedTyPack T Γ A) := PolyRedPackAdequate R PiA.polyRed
 
@@ -255,11 +278,11 @@ structure SigRedTmEq {A : Term} (SigA : SigRedTy Γ A) (t u : Term) where
 notation "[" Γ " ⊨Σ " t " ≃ " u " : " A " | " SigA "]" => SigRedTmEq (Γ:= Γ) (A:=A) t SigA t u
 
 
-structure RedTm (Γ : Ctx) (k A : Term) : Type u where
+structure RedTm (Γ : Ctx) (k A : Term) : Type where
     ty : [Γ ⊢ k : A]
     refl : [Γ ⊢ k ~ k : A]
 
-structure RedTmEq (Γ : Ctx) (k l A : Term) : Type u where
+structure RedTmEq (Γ : Ctx) (k l A : Term) : Type where
     conv : [Γ ⊢ k ~ l : A]
 
 notation "[" Γ " ⊨NeNf " k " : " A "]" => RedTm Γ k A
@@ -323,7 +346,7 @@ notation "[" Γ " ⊨ℕ " t  " : " A " | " NA "]" => NatRedTm (Γ:=Γ) (A:=A) (
 
 mutual
 
-  inductive NatRedTmEq {Γ : Ctx} {A: Term} (NA : NatRedTy Γ A) : Term → Term → Type u :=
+  inductive NatRedTmEq {Γ : Ctx} {A: Term} (NA : NatRedTy Γ A) : Term → Term → Type u:=
   | Build_NatRedTmEq {t u}
     (nfL nfR : Term)
     (redL : [Γ ⊢ t :⤳*: nfL : tNat])
@@ -370,13 +393,13 @@ notation "[" Γ " ⊨⊥ " t " : " A " | " NA "]" => EmptyRedTm (Γ:=Γ) (A:=A) 
 inductive EmptyPropEq {Γ : Ctx} : Term → Term → Type u :=
   | neReq {ne ne'} : [Γ ⊨NeNf ne ≃ ne' : tEmpty] → EmptyPropEq ne ne'
 
-structure EmptyRedTmEq {Γ : Ctx} {A: Term} (NA : EmptyRedTy Γ A) (t u:Term) where
+structure EmptyRedTmEq {Γ : Ctx} {A: Term} (NA : EmptyRedTy Γ A) (t u:Term) : Type u where
   nfL  : Term
   nfR  : Term
   redL : [Γ ⊢ t :⤳*: nfL : tEmpty]
   redR : [Γ ⊢ u :⤳*: nfR : tEmpty ]
   eq   : [Γ ⊢ nfL ≃ nfR : tEmpty]
-  prop : EmptyPropEq (Γ:=Γ) nfL nfR
+  prop : EmptyPropEq.{u} (Γ:=Γ) nfL nfR
 
 
 notation "[" Γ " ⊨⊥ " t " ≃ " u " : " A " | " NA "]" => EmptyRedTmEq (Γ:=Γ) (A:=A) (NA:=NA) t u
@@ -412,19 +435,21 @@ structure IdRedTyAdequate
   tyKripkeAd : ∀ {Δ} (ρ : Δ ≤ Γ) (wfΔ : [⊢Δ]), (IA.tyKripke ρ wfΔ).Adequate R
 
 structure IdRedTyEq
-  {Γ : Ctx} {A : Term} (IA : IdRedTyPack Γ A) (B : Term) where
+  {Γ : Ctx} {A : Term} (IA : IdRedTyPack Γ A) (B : Term)  where
   ty : Term
   lhs : Term
   rhs : Term
   out_ty := tId ty lhs rhs
   red : [Γ ⊢ B :⤳*: out_ty]
   eq : [Γ ⊢ IA.out_ty ≃ out_ty]
-  tyRed0 := IA.tyRed
-  tyRed : [ tyRed0 | _ ⊨ _ ≃ ty ]
+  -- tyRed0 := IA.tyRed
+  tyRed : [ IA.tyRed | _ ⊨ _ ≃ ty ]
   -- lhsConv : [ Γ ⊢ IA.(IdRedTyPack.lhs) ≃ lhs : IA.(IdRedTyPack.ty) ]
   -- rhsConv : [ Γ ⊢ IA.(IdRedTyPack.rhs) ≃ rhs : IA.(IdRedTyPack.ty) ]
-  lhsRed : [ tyRed0 | _ ⊨ IA.lhs ≃ lhs : _ ]
-  rhsRed : [ tyRed0 | _ ⊨ IA.rhs ≃ rhs : _ ]
+  lhsRed : [ IA.tyRed | _ ⊨ IA.lhs ≃ lhs : _ ]
+  rhsRed : [ IA.tyRed | _ ⊨ IA.rhs ≃ rhs : _ ]
+
+#check IdRedTyEq.mk
 
 inductive IdProp {Γ : Ctx} {A: Term} (IA : IdRedTyPack Γ A) : Term → Type _ :=
   | reflR {A x} :
@@ -469,38 +494,35 @@ inductive IdPropEq {Γ : Ctx} {A: Term} {IA : IdRedTyPack Γ A} : Term → Term 
       eq : [Γ ⊢ nfL ≃ nfR : IA.out_ty]
       prop : IdPropEq (Γ:=Γ) (A:=A) (IA:=IA) nfL nfR
 
-/--Definition of the logical relation
-  2 issues here:
-  - universe issues, fixable with enough work on expliciting everything, just like in Coq
-  - nested local vars, needs Lean kernel fix to extend the algorithm..
--/
+set_option genSizeOfSpec false
+
 inductive LR
-  [WfContext] [WfType] [Typing] [ConvTerm] [ConvType] [ConvNeuConv] [RedType] [RedTerm]
-  {l : TypeLevel} (rec : ∀ l', l' << l → RedRel)
-: RedRel :=
-  | LRU {Γ A} (H : [Γ ⊨U⟨l⟩ A]) :
-      LR rec Γ A
+  [WfCtx] [WfType] [Typing] [ConvTerm] [ConvType] [ConvNeuConv] [RedType] [RedTerm]
+  {l : TypeLevel} (rec_ : ∀ l', l' << l → RedRel)
+: RedRel.{1,2} :=
+  | LRU {Γ A} (H : URedTy.{1} l Γ A) :
+      LR rec_ Γ A
       (fun B   => [Γ ⊨U≃ B ])
-      (fun t   => [ rec _ | Γ ⊨U t     : A | H ])
-      (fun t u => [ rec _ | Γ ⊨U t ≃ u : A | H ])
-  | LRne {Γ A} (neA : [ Γ ⊨ne A ]) :
-      LR rec Γ A
+      (fun t   =>  URedTm.{0,0,1} _ (rec_ _) Γ t A H)
+      (fun t u => [ rec_ _ | Γ ⊨U t ≃ u : A | H ])
+  | LRne {Γ A} (neA :  NeRedTy.{0} Γ A) :
+      LR rec_ Γ A
       (fun B   =>  [ Γ ⊨ne A ≃ B     | neA])
       (fun t   =>  [ Γ ⊨ne t     : A | neA])
       (fun t u =>  [ Γ ⊨ne t ≃ u : A | neA])
-  | LRPi {Γ : Ctx} {A : Term} (PiA : PiRedTy Γ A) (PiAad : PiRedTyAdequate (LR rec) PiA) :
-    LR rec Γ A
-      (fun B   => [ Γ ⊨Π A ≃ B     | PiA ])
-      (fun t   => [ Γ ⊨Π t     : A | PiA ])
-      (fun t u => [ Γ ⊨Π t ≃ u : A | PiA ])
-  | LRNat {Γ A} (NA : [Γ ⊨ℕ A]) :
-    LR rec Γ A (NatRedTyEq NA) (NatRedTm NA) (NatRedTmEq NA)
+  | LRPi {Γ : Ctx} {A : Term} (PiA : PiRedTy.{0,1} Γ A) (PiAad : PolyRedPackAdequate.{1,2} (LR rec_) PiA.lift.polyRed) :
+    LR rec_ Γ A
+      (fun B   => PiRedTyEq.{0,1} (Γ:= Γ) (A:= A) PiA B)
+      (fun t   => PiRedTm.{0,1} (Γ:= Γ) (A:= A) t PiA)
+      (fun t u => PiRedTmEq.{0,1} (Γ:= Γ) (t := t) (u := u) (A:= A) (PiA := PiA))
+  | LRNat {Γ A} (NA : NatRedTy.{0} Γ A) :
+    LR rec_ Γ A (NatRedTyEq NA) (NatRedTm NA) (NatRedTmEq NA)
   | LREmpty {Γ A} (NA : [Γ ⊨⊥ A]) :
-    LR rec Γ A (EmptyRedTyEq NA) (EmptyRedTm NA) (EmptyRedTmEq NA)
-  | LRSig {Γ : Ctx} {A : Term} (SigA : SigRedTy Γ A) (SigAad : SigRedTyAdequate (LR rec) SigA) :
-    LR rec Γ A (SigRedTyEq SigA) (SigRedTm SigA) (SigRedTmEq SigA)
-  | LRId {Γ A} (IA : IdRedTyPack Γ A) (IAad : IdRedTyAdequate (LR rec) IA) :
-    LR rec Γ A
-      (IdRedTyEq IA)
+    LR rec_ Γ A (EmptyRedTyEq NA) (EmptyRedTm NA) (EmptyRedTmEq NA)
+  | LRSig {Γ : Ctx} {A : Term} (SigA : SigRedTy Γ A) (SigAad :  PolyRedPackAdequate (LR rec_) SigA.polyRed) :
+    LR rec_ Γ A (SigRedTyEq SigA) (SigRedTm SigA) (SigRedTmEq SigA)
+  | LRId {Γ A} (IA : IdRedTyPack Γ A) (IAad : IdRedTyAdequate (LR rec_) IA) :
+    LR rec_ Γ A
+      (IdRedTyEq.{1,1} IA)
       (IdRedTm IA)
       (IdRedTmEq IA)
